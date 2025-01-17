@@ -7,14 +7,19 @@
   }
 
   searxng.ready(function () {
-    d.querySelectorAll('#urls img.image').forEach(
+    d.querySelectorAll('#urls img').forEach(
       img =>
         img.addEventListener(
           'error', () => {
-            img.style.display = 'none';
-            img.error = null;
-          }
+            // console.log("ERROR can't load: " + img.src);
+            img.src = window.searxng.settings.theme_static_path + "/img/img_load_error.svg";
+          },
+          {once: true}
         ));
+
+    if (d.querySelector('#search_url button#copy_url')) {
+      d.querySelector('#search_url button#copy_url').style.display = "block";
+    }
 
     searxng.on('.btn-collapse', 'click', function () {
       var btnLabelCollapsed = this.getAttribute('data-btn-text-collapsed');
@@ -39,6 +44,12 @@
       if (srctest === null || srctest === undefined || srctest === false) {
         iframe_load.setAttribute('src', iframe_load.getAttribute('data-src'));
       }
+    });
+
+    searxng.on('#copy_url', 'click', function () {
+      var target = this.parentElement.querySelector('pre');
+      navigator.clipboard.writeText(target.innerText);
+      this.innerText = this.dataset.copiedText;
     });
 
     searxng.selectImage = function (resultElement) {
@@ -82,8 +93,14 @@
       e.preventDefault();
       searxng.closeDetail();
     });
-    searxng.on('.result-detail-previous', 'click', e => searxng.selectPrevious(false));
-    searxng.on('.result-detail-next', 'click', e => searxng.selectNext(false));
+    searxng.on('.result-detail-previous', 'click', e => {
+      e.preventDefault();
+      searxng.selectPrevious(false)
+    });
+    searxng.on('.result-detail-next', 'click', e => {
+      e.preventDefault();
+      searxng.selectNext(false);
+    });
 
     w.addEventListener('scroll', function () {
       var e = d.getElementById('backToTop'),

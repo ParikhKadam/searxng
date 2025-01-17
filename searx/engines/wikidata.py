@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# lint: pylint
 """This module implements the Wikidata engine.  Some implementations are shared
 from :ref:`wikipedia engine`.
 
@@ -18,7 +17,10 @@ from searx.data import WIKIDATA_UNITS
 from searx.network import post, get
 from searx.utils import searx_useragent, get_string_replaces_function
 from searx.external_urls import get_external_url, get_earth_coordinates_url, area_to_osm_zoom
-from searx.engines.wikipedia import fetch_traits as _fetch_traits
+from searx.engines.wikipedia import (
+    fetch_wikimedia_traits,
+    get_wiki_params,
+)
 from searx.enginelib.traits import EngineTraits
 
 if TYPE_CHECKING:
@@ -37,6 +39,12 @@ about = {
     "require_api_key": False,
     "results": 'JSON',
 }
+
+display_type = ["infobox"]
+"""A list of display types composed from ``infobox`` and ``list``.  The latter
+one will add a hit to the result list.  The first one will show a hit in the
+info box.  Both values can be set, or one of the two can be set."""
+
 
 # SPARQL
 SPARQL_ENDPOINT_URL = 'https://query.wikidata.org/sparql'
@@ -163,19 +171,15 @@ def send_wikidata_query(query, method='GET'):
 
 def request(query, params):
 
-    # wikidata does not support zh-classical (zh_Hans) / zh-TW, zh-HK and zh-CN
-    # mapped to zh
-    sxng_lang = params['searxng_locale'].split('-')[0]
-    language = traits.get_language(sxng_lang, 'en')
-
-    query, attributes = get_query(query, language)
-    logger.debug("request --> language %s // len(attributes): %s", language, len(attributes))
+    eng_tag, _wiki_netloc = get_wiki_params(params['searxng_locale'], traits)
+    query, attributes = get_query(query, eng_tag)
+    logger.debug("request --> language %s // len(attributes): %s", eng_tag, len(attributes))
 
     params['method'] = 'POST'
     params['url'] = SPARQL_ENDPOINT_URL
     params['data'] = {'query': query}
     params['headers'] = get_headers()
-    params['language'] = language
+    params['language'] = eng_tag
     params['attributes'] = attributes
 
     return params
@@ -269,8 +273,9 @@ def get_results(attribute_result, attributes, language):
                 for url in value.split(', '):
                     infobox_urls.append({'title': attribute.get_label(language), 'url': url, **attribute.kwargs})
                     # "normal" results (not infobox) include official website and Wikipedia links.
-                    if attribute.kwargs.get('official') or attribute_type == WDArticle:
+                    if "list" in display_type and (attribute.kwargs.get('official') or attribute_type == WDArticle):
                         results.append({'title': infobox_title, 'url': url, "content": infobox_content})
+
                     # update the infobox_id with the wikipedia URL
                     # first the local wikipedia URL, and as fallback the english wikipedia URL
                     if attribute_type == WDArticle and (
@@ -288,7 +293,7 @@ def get_results(attribute_result, attributes, language):
             elif attribute_type == WDGeoAttribute:
                 # geocoordinate link
                 # use the area to get the OSM zoom
-                # Note: ignre the unit (must be km² otherwise the calculation is wrong)
+                # Note: ignore the unit (must be km² otherwise the calculation is wrong)
                 # Should use normalized value p:P2046/psn:P2046/wikibase:quantityAmount
                 area = attribute_result.get('P2046')
                 osm_zoom = area_to_osm_zoom(area) if area else 19
@@ -306,9 +311,15 @@ def get_results(attribute_result, attributes, language):
     # add the wikidata URL at the end
     infobox_urls.append({'title': 'Wikidata', 'url': attribute_result['item']})
 
-    if img_src is None and len(infobox_attributes) == 0 and len(infobox_urls) == 1 and len(infobox_content) == 0:
+    if (
+        "list" in display_type
+        and img_src is None
+        and len(infobox_attributes) == 0
+        and len(infobox_urls) == 1
+        and len(infobox_content) == 0
+    ):
         results.append({'url': infobox_urls[0]['url'], 'title': infobox_title, 'content': infobox_content})
-    else:
+    elif "infobox" in display_type:
         results.append(
             {
                 'infobox': infobox_title,
@@ -751,7 +762,8 @@ def debug_explain_wikidata_query(query, method='GET'):
 
 def init(engine_settings=None):  # pylint: disable=unused-argument
     # WIKIDATA_PROPERTIES : add unit symbols
-    WIKIDATA_PROPERTIES.update(WIKIDATA_UNITS)
+    for k, v in WIKIDATA_UNITS.items():
+        WIKIDATA_PROPERTIES[k] = v['symbol']
 
     # WIKIDATA_PROPERTIES : add property labels
     wikidata_property_names = []
@@ -769,12 +781,16 @@ def init(engine_settings=None):  # pylint: disable=unused-argument
 
 
 def fetch_traits(engine_traits: EngineTraits):
-    """Use languages evaluated from :py:obj:`wikipedia.fetch_traits
-    <searx.engines.wikipedia.fetch_traits>` except zh-classical (zh_Hans) what
-    is not supported by wikidata."""
+    """Uses languages evaluated from :py:obj:`wikipedia.fetch_wikimedia_traits
+    <searx.engines.wikipedia.fetch_wikimedia_traits>` and removes
 
-    _fetch_traits(engine_traits)
-    # wikidata does not support zh-classical (zh_Hans)
-    engine_traits.languages.pop('zh_Hans')
-    # wikidata does not have net-locations for the languages
+    - ``traits.custom['wiki_netloc']``: wikidata does not have net-locations for
+      the languages and the list of all
+
+    - ``traits.custom['WIKIPEDIA_LANGUAGES']``: not used in the wikipedia engine
+
+    """
+
+    fetch_wikimedia_traits(engine_traits)
     engine_traits.custom['wiki_netloc'] = {}
+    engine_traits.custom['WIKIPEDIA_LANGUAGES'] = []

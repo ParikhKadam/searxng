@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-# lint: pylint
 # pylint: disable=global-statement
 # pylint: disable=missing-module-docstring, missing-class-docstring
 
@@ -111,8 +110,7 @@ class Network:
             return
         if isinstance(local_addresses, str):
             local_addresses = [local_addresses]
-        for address in local_addresses:
-            yield address
+        yield from local_addresses
 
     def get_ipaddress_cycle(self):
         while True:
@@ -235,8 +233,7 @@ class Network:
             del kwargs['raise_for_httperror']
         return do_raise_for_httperror
 
-    @staticmethod
-    def patch_response(response, do_raise_for_httperror):
+    def patch_response(self, response, do_raise_for_httperror):
         if isinstance(response, httpx.Response):
             # requests compatibility (response is not streamed)
             # see also https://www.python-httpx.org/compatibility/#checking-for-4xx5xx-responses
@@ -244,8 +241,11 @@ class Network:
 
             # raise an exception
             if do_raise_for_httperror:
-                raise_for_httperror(response)
-
+                try:
+                    raise_for_httperror(response)
+                except:
+                    self._logger.warning(f"HTTP Request failed: {response.request.method} {response.request.url}")
+                    raise
         return response
 
     def is_valid_response(self, response):
@@ -271,7 +271,7 @@ class Network:
                 else:
                     response = await client.request(method, url, **kwargs)
                 if self.is_valid_response(response) or retries <= 0:
-                    return Network.patch_response(response, do_raise_for_httperror)
+                    return self.patch_response(response, do_raise_for_httperror)
             except httpx.RemoteProtocolError as e:
                 if not was_disconnected:
                     # the server has closed the connection:
@@ -409,7 +409,7 @@ def done():
     """Close all HTTP client
 
     Avoid a warning at exit
-    see https://github.com/encode/httpx/blob/1a6e254f72d9fd5694a1c10a28927e193ab4f76b/httpx/_client.py#L1785
+    See https://github.com/encode/httpx/pull/2026
 
     Note: since Network.aclose has to be async, it is not possible to call this method on Network.__del__
     So Network.aclose is called here using atexit.register
