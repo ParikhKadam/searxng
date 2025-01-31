@@ -1,7 +1,18 @@
-#tab-content-query table td,
-#tab-content-query table th {
-  .ltr-text-align-right() !important;
-  height: 3rem;
+table {
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    .ltr-text-align-left();
+  }
+
+  tr.pref-group th {
+    font-weight: normal;
+    .ltr-text-align-left();
+    background: var(--color-settings-table-group-background);
+  }
 }
 
 #main_preferences {
@@ -20,6 +31,29 @@
     display: block;
     .ltr-float-left();
     width: 300px;
+  }
+
+  input[type="text"] {
+    width: 13.25rem;
+    color: var(--color-toolkit-input-text-font);
+    border: none;
+    background: none repeat scroll 0 0 var(--color-toolkit-select-background);
+    padding: 0.2rem 0.4rem;
+    height: 2rem;
+    .rounded-corners-tiny;
+
+    &:hover,
+    &:focus {
+      background-color: var(--color-toolkit-select-background-hover);
+    }
+  }
+
+  div.pref-group {
+    width: 100%;
+    font-weight: normal;
+    padding: 1rem 0.5rem;
+    .ltr-text-align-left();
+    background: var(--color-settings-table-group-background);
   }
 
   .value {
@@ -41,21 +75,6 @@
       width: 14rem;
     }
 
-    input[type="text"] {
-      width: 13.25rem;
-      color: var(--color-toolkit-input-text-font);
-      border: none;
-      background: none repeat scroll 0 0 var(--color-toolkit-select-background);
-      padding: 0.2rem 0.4rem;
-      height: 2rem;
-      .rounded-corners-tiny;
-
-      &:hover,
-      &:focus {
-        background-color: var(--color-toolkit-select-background-hover);
-      }
-    }
-
     select:focus,
     input:focus {
       outline: none;
@@ -72,12 +91,13 @@
     font-size: 90%;
   }
 
-  table {
-    border-collapse: collapse;
-  }
-
-  table td {
-    text-align: center;
+  .bang {
+    .ltr-text-align-left();
+    .rounded-corners-tiny;
+    background-color: var(--color-doc-code-background);
+    color: var(--color-doc-code);
+    padding: 0.2rem;
+    border: 0 none;
   }
 
   .category {
@@ -95,10 +115,6 @@
   }
 
   table.table_engines {
-    td {
-      height: 3.75rem;
-    }
-
     th.name {
       /* stylelint-disable */
       label {
@@ -114,15 +130,14 @@
         .engine-description {
           margin-top: 0.5rem;
         }
+
+        .bang {
+          margin: 0.3rem;
+        }
       }
     }
 
-    .engine-group {
-      .ltr-text-align-left();
-      font-weight: normal;
-      background: var(--color-settings-engine-group-background);
-    }
-
+    .checkbox-col,
     .name,
     .shortcut {
       .ltr-text-align-left();
@@ -178,10 +193,32 @@
     }
   }
 
+  #toggle-all-engines-container {
+    width: max-content;
+    margin-left: auto;
+  }
+
   div.selectable_url {
     pre {
       width: 100%;
     }
+  }
+
+  #copy-hash-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    div.selectable_url {
+      pre {
+        width: auto;
+        flex-grow: 1;
+      }
+    }
+  }
+
+  #pref-hash-input {
+    width: 100%;
   }
 }
 

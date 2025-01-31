@@ -176,6 +176,15 @@ div.selectable_url {
   border-color: var(--color-error);
 }
 
+.dialog-error-block {
+  .dialog();
+
+  display: block;
+  color: var(--color-error);
+  background: var(--color-error-background);
+  border-color: var(--color-error);
+}
+
 .dialog-warning {
   .dialog();
 
@@ -194,7 +203,7 @@ div.selectable_url {
   left: 50%;
   margin: 0 auto;
   transform: translate(-50%, -50%);
-  z-index: 10000000;
+  z-index: 5000;
 
   h3 {
     margin-top: 0;
@@ -208,8 +217,7 @@ div.selectable_url {
 
 //
 .scrollx {
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: auto hidden;
   display: block;
   padding: 0;
   margin: 0;
@@ -331,7 +339,7 @@ select {
   padding: 0.2rem !important;
   color: var(--color-search-font);
   font-size: 0.9rem;
-  z-index: 2;
+  z-index: 100;
 
   &:hover,
   &:focus {
@@ -405,7 +413,7 @@ input.checkbox-onoff[type="checkbox"] {
     border: 1px solid var(--color-btn-background);
     border-radius: 12px;
     box-shadow: var(--color-btn-background) 0 0 3px;
-    z-index: 10000;
+    z-index: 1200;
     top: -0.55em;
     left: -0.6em;
   }
@@ -428,7 +436,7 @@ reversed-checkbox displays unchecked checkedboxes as checked, and vice versa.
 see https://github.com/searxng/searxng/blob/3408d061aab9abc6168fec9bbc6deab71b236dac/searx/templates/simple/preferences.html#L313
 */
 input.checkbox-onoff[type="checkbox"],
-.reversed-checkbox input.checkbox-onoff[type="checkbox"]:checked {
+input.checkbox-onoff.reversed-checkbox[type="checkbox"]:checked {
   background: var(--color-toolkit-checkbox-onoff-off-background);
 
   &::before {
@@ -440,7 +448,7 @@ input.checkbox-onoff[type="checkbox"],
 }
 
 input.checkbox-onoff[type="checkbox"]:checked,
-.reversed-checkbox input.checkbox-onoff[type="checkbox"] {
+input.checkbox-onoff.reversed-checkbox[type="checkbox"] {
   background: var(--color-toolkit-checkbox-onoff-on-background);
 
   &::before {
@@ -496,7 +504,7 @@ input.checkbox-onoff[type="checkbox"]:checked,
   }
 
   // if not checked and possible to checked then display a "light" check mark on hover
-  input.checkbox[type=checkbox]:not(:checked):not([disabled]):not(.checkbox-onoff):hover::after {
+  input.checkbox[type=checkbox]:not(:checked, [disabled], .checkbox-onoff):hover::after {
     opacity: 0.5;
   }
 }
@@ -565,7 +573,7 @@ input.checkbox-onoff[type="checkbox"]:checked,
   background: var(--color-toolkit-engine-tooltip-background);
   font-size: 14px;
   font-weight: normal;
-  z-index: 1000000;
+  z-index: 5000;
   text-align: left;
   .rounded-corners;
 }
@@ -584,8 +592,7 @@ td:hover .engine-tooltip,
   width: -moz-available;
   width: -webkit-fill-available;
   width: fill;
-  flex-direction: row;
-  flex-wrap: nowrap;
+  flex-flow: row nowrap;
   align-items: center;
   display: inline-flex;
 }

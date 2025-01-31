@@ -63,6 +63,8 @@ html {
   background-color: var(--color-base-background);
   padding: 0;
   margin: 0;
+
+  scroll-behavior: smooth;
 }
 
 body,
@@ -109,7 +111,8 @@ footer {
 }
 
 input[type="submit"],
-#results button[type="submit"] {
+#results button[type="submit"],
+.button {
   padding: 0.7rem;
   display: inline-block;
   background: var(--color-btn-background);
@@ -167,6 +170,8 @@ article[data-vim-selected].category-social {
 .result {
   margin: @results-margin 0;
   padding: @result-padding;
+  box-sizing: border-box;
+  width: 100%;
   .ltr-border-left(0.2rem solid transparent);
 
   h3 {
@@ -195,7 +200,8 @@ article[data-vim-selected].category-social {
 
   .cache_link,
   .proxyfied_link {
-    font-size: 0.9em !important;
+    font-size: smaller !important;
+    margin-left: 0.5rem;
   }
 
   .content,
@@ -228,19 +234,29 @@ article[data-vim-selected].category-social {
     }
   }
 
+  .url_header {
+    display: flex;
+    gap: 0.5rem;
+  }
+
   .url_wrapper {
     display: flex;
+    align-items: center;
     font-size: 1rem;
     color: var(--color-result-url-font);
-    flex-wrap: nowrap;
+    flex-flow: row nowrap;
     overflow: hidden;
-    flex-direction: row;
     margin: 0;
     padding: 0;
 
     .url_o1 {
       white-space: nowrap;
       flex-shrink: 1;
+      padding-bottom: 1px;
+
+      .url_i1 {
+        unicode-bidi: plaintext;
+      }
     }
 
     .url_o1::after {
@@ -252,10 +268,9 @@ article[data-vim-selected].category-social {
     .url_o2 {
       overflow: hidden;
       white-space: nowrap;
-      flex-basis: content;
-      flex-grow: 0;
-      flex-shrink: 1;
+      flex: 0 1 content;
       text-align: right;
+      padding-bottom: 1px;
 
       .url_i2 {
         float: right;
@@ -265,6 +280,7 @@ article[data-vim-selected].category-social {
 
   .published_date,
   .result_length,
+  .result_views,
   .result_author,
   .result_shipping,
   .result_source_country {
@@ -277,24 +293,12 @@ article[data-vim-selected].category-social {
     color: var(--color-result-description-highlight-font);
   }
 
-  img {
-    &.thumbnail {
-      .ltr-float-left();
-      padding-top: 0.6rem;
-      .ltr-padding-right(1rem);
-      width: 20rem;
-      height: unset; // remove heigth value that was needed for lazy loading
-    }
-
-    &.image {
-      .ltr-float-left();
-      padding-top: 0.6rem;
-      .ltr-padding-right(1rem);
-      width: 7rem;
-      max-height: 7rem;
-      object-fit: scale-down;
-      object-position: right top;
-    }
+  img.thumbnail {
+    .ltr-float-left();
+    padding-top: 0.6rem;
+    .ltr-padding-right(1rem);
+    width: 7rem;
+    height: unset; // remove height value that was needed for lazy loading
   }
 
   .break {
@@ -302,7 +306,8 @@ article[data-vim-selected].category-social {
   }
 }
 
-.result-paper {
+.result-paper,
+.result-packages {
   .attributes {
     display: table;
     border-spacing: 0.125rem;
@@ -345,6 +350,12 @@ article[data-vim-selected].category-social {
   }
 }
 
+.result-packages {
+  .attributes {
+    margin-top: 0.3rem;
+  }
+}
+
 .template_group_images {
   display: flex;
   flex-wrap: wrap;
@@ -381,6 +392,16 @@ article[data-vim-selected].category-social {
 .embedded-content iframe {
   width: 100%;
   padding: 10px 0 0 0;
+}
+
+.result-videos {
+  img.thumbnail {
+    .ltr-float-left();
+    padding-top: 0.6rem;
+    .ltr-padding-right(1rem);
+    width: 20rem;
+    height: unset; // remove height value that was needed for lazy loading
+  }
 }
 
 .result-videos .content {
@@ -436,9 +457,11 @@ article[data-vim-selected].category-social {
   margin: 0.25rem;
   border: none !important;
   height: @results-image-row-height;
+  width: unset;
 
   & > a {
     position: relative;
+    outline: none;
   }
 
   img {
@@ -450,6 +473,17 @@ article[data-vim-selected].category-social {
     object-fit: cover;
     vertical-align: bottom;
     background: var(--color-result-image-background);
+  }
+
+  .image_resolution {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    background: var(--color-image-resolution-background);
+    padding: 0.3rem 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-image-resolution-font);
+    border-top-left-radius: 0.3rem;
   }
 
   span.title,
@@ -509,24 +543,27 @@ article[data-vim-selected].category-social {
   margin-bottom: 0;
   .ltr-margin-left(@results-offset);
   display: grid;
-  grid-template-columns: @results-width @results-sidebar-width;
-  grid-template-rows: min-content min-content 1fr min-content;
+  grid-template:
+      "corrections sidebar" min-content
+      "answers sidebar" min-content
+      "urls sidebar" 1fr
+      "pagination sidebar" min-content
+      / @results-width @results-sidebar-width
+  ;
   gap: 0 @results-gap;
-  grid-template-areas:
-    "corrections sidebar"
-    "answers sidebar"
-    "urls sidebar"
-    "pagination sidebar";
 }
 
-#results #sidebar *:first-child,
-#results #urls *:first-child {
+#results #sidebar *:first-child {
   margin-top: 0;
 }
 
 #urls {
   padding: 0;
   grid-area: urls;
+}
+
+#apis .wrapper {
+  display: flex;
 }
 
 #suggestions {
@@ -589,11 +626,28 @@ article[data-vim-selected].category-social {
   }
 }
 
+#infoboxes .title,
 #suggestions .title,
 #search_url .title,
+#engines_msg .title,
 #apis .title {
   margin: 2em 0 0.5em 0;
   color: var(--color-base-font);
+}
+
+summary.title {
+  cursor: pointer;
+  padding-top: 1em;
+}
+
+.sidebar-collapsible {
+  border-top: 1px solid var(--color-sidebar-border);
+  padding-bottom: 0.5em;
+}
+
+#sidebar-end-collapsible {
+  border-bottom: 1px solid var(--color-sidebar-border);
+  width: 100%;
 }
 
 #answers {
@@ -611,6 +665,15 @@ article[data-vim-selected].category-social {
 
   span {
     overflow-wrap: anywhere;
+  }
+
+  .answer {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .answer-url {
+    margin: 5px 10px 10px auto;
   }
 }
 
@@ -684,21 +747,50 @@ article[data-vim-selected].category-social {
   }
 }
 
-#search_url {
-  margin-top: 8px;
+#apis {
+  input {
+    font-size: 0.9em;
+    margin: 0 10px 0 0;
+    .show-content-button;
+  }
+}
 
+#engines_msg {
+  .engine-name {
+    width: 10rem;
+  }
+
+  .response-error {
+    color: var(--color-error);
+  }
+
+  .bar-chart-value {
+    width: auto;
+  }
+}
+
+#search_url {
   div.selectable_url {
     pre {
+      float: left;
       width: 200em;
     }
+  }
+
+  button#copy_url {
+    float: right;
+    padding: 0.4rem;
+    margin-left: 0.5rem;
+    border-radius: 0.3rem;
+    display: none;    // will be shown by JS.
   }
 }
 
 #links_on_top {
   position: absolute;
-  .ltr-right(1.8rem);
+  .ltr-right(1rem);
   .ltr-text-align-right();
-  top: 2.2rem;
+  top: 2.7rem;
   padding: 0;
   border: 0;
   display: flex;
@@ -754,11 +846,6 @@ article[data-vim-selected].category-social {
   border: none;
 }
 
-#apis {
-  margin-top: 8px;
-  clear: both;
-}
-
 #backToTop {
   border: 1px solid var(--color-backtotop-border);
   margin: 0;
@@ -770,6 +857,7 @@ article[data-vim-selected].category-social {
   .ltr-left(@results-width + @results-offset + (0.5 * @results-gap - 1.2em));
   transition: opacity 0.5s;
   opacity: 0;
+  pointer-events: none;
   .rounded-corners;
 
   a {
@@ -788,6 +876,7 @@ article[data-vim-selected].category-social {
 
 #results.scrolling #backToTop {
   opacity: 1;
+  pointer-events: all;
 }
 
 /*
@@ -836,14 +925,6 @@ article[data-vim-selected].category-social {
     }
   }
 
-  #apis {
-    display: none;
-  }
-
-  #search_url {
-    display: none;
-  }
-
   .result {
     .thumbnail {
       max-width: 98%;
@@ -864,7 +945,7 @@ article[data-vim-selected].category-social {
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-end;
-      padding: 0 0 3px 0;
+      padding: 3px 0 0 0;
     }
   }
 
@@ -889,22 +970,22 @@ article[data-vim-selected].category-social {
   }
 
   #main_results div#results {
-    margin: 1rem auto 0 auto;
+    margin: 0 auto;
     justify-content: center;
     display: grid;
-    grid-template-columns: @results-width;
-    grid-template-rows: min-content min-content min-content 1fr min-content min-content;
+    grid-template:
+      "corrections" min-content
+      "answers" min-content
+      "sidebar" min-content
+      "urls" 1fr
+      "pagination" min-content
+      / @results-width
+    ;
     gap: 0;
-    grid-template-areas:
-      "corrections"
-      "answers"
-      "sidebar"
-      "urls"
-      "pagination";
   }
 }
 
-@media screen and (max-width: calc(@tablet - 0.5px)) {
+@media screen and (width <= calc(@tablet - 0.5px)) {
   #links_on_top {
     span {
       display: none;
@@ -912,7 +993,7 @@ article[data-vim-selected].category-social {
   }
 }
 
-@media screen and (max-width: 52rem) {
+@media screen and (width <= 52rem) {
   body.results_endpoint {
     #links_on_top {
       .link_on_top_about,
@@ -924,10 +1005,10 @@ article[data-vim-selected].category-social {
 }
 
 @media screen and (min-width: @phone) and (max-width: @tablet) {
-  // when .center-aligment-yes, see style-center.less
+  // when .center-alignment-yes, see style-center.less
   // the media query includes "min-width: @phone"
   // because the phone layout includes the tablet layout unconditionally.
-  .center-aligment-no {
+  .center-alignment-no {
     .results-tablet();
   }
 }
@@ -937,15 +1018,14 @@ article[data-vim-selected].category-social {
 #main_results div#results.only_template_images {
   margin: 1rem @results-tablet-offset 0 @results-tablet-offset;
   display: grid;
-  grid-template-columns: 100%;
-  grid-template-rows: min-content min-content min-content 1fr min-content;
+  grid-template:
+    "corrections" min-content
+    "answers" min-content
+    "sidebar" min-content
+    "urls" 1fr
+    "pagination" min-content
+    / 100%;
   gap: 0;
-  grid-template-areas:
-    "corrections"
-    "answers"
-    "sidebar"
-    "urls"
-    "pagination";
 
   #sidebar {
     display: none;
@@ -986,12 +1066,12 @@ article[data-vim-selected].category-social {
 
   #main_results div#results {
     grid-template-columns: 100%;
-    margin: 1rem 0 0 0;
+    margin: 0 auto;
   }
 
   #links_on_top {
-    top: 0.8rem;
-    .ltr-right(0.7rem);
+    top: 1.4rem;
+    .ltr-right(10px);
   }
 
   #main_index #links_on_top {
@@ -1015,13 +1095,17 @@ article[data-vim-selected].category-social {
 
   .result {
     background: var(--color-result-background);
-    margin: 1rem 0;
+    border: 1px solid var(--color-result-background);
+    margin: 1rem 2%;
+    width: 96%;
+    .rounded-corners;
   }
 
   .result-images {
     margin: 0;
     height: @results-image-row-height-phone;
     background: var(--color-base-background-mobile);
+    width: unset;
   }
 
   .infobox {
@@ -1033,7 +1117,8 @@ article[data-vim-selected].category-social {
     display: none;
   }
 
-  .result-paper {
+  .result-paper,
+  .result-packages {
     .attributes {
       display: block;
 

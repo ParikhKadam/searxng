@@ -15,20 +15,22 @@
   background: var(--color-header-background);
   border-bottom: 1px solid var(--color-header-border);
   display: grid;
-  column-gap: 1.2rem;
-  row-gap: 1rem;
+  gap: 1rem 1.2rem;
   grid-template-columns: 3rem 1fr;
   grid-template-areas:
     "logo search"
     "spacer categories";
 }
 
-.category {
+.category_checkbox,
+.category_button {
   display: inline-block;
   position: relative;
   .ltr-margin-right(1rem);
   padding: 0;
+}
 
+.category_checkbox {
   input {
     display: none;
   }
@@ -57,7 +59,44 @@
   }
 }
 
+button.category_button {
+  background-color: inherit;
+  color: var(--color-base-font);
+  cursor: pointer;
+  padding: 0.2rem 0;
+  display: inline-flex;
+  align-items: center;
+  text-transform: capitalize;
+  font-size: 0.9em;
+  border: none;
+  border-bottom: 2px solid transparent;
+
+  svg {
+    padding-right: 0.2rem;
+  }
+
+  &.selected,
+  &:active {
+    color: var(--color-categories-item-selected-font);
+    border-bottom: 2px solid var(--color-categories-item-border-selected);
+  }
+}
+
+// only used when JavaScript is disabled
+.no-js #categories_container:has(button.category_button:focus-within) button.category_button {
+  &.selected {
+    color: var(--color-base-font);
+    border-bottom: none;
+  }
+
+  &:focus-within {
+    color: var(--color-categories-item-selected-font);
+    border-bottom: 2px solid var(--color-categories-item-border-selected);
+  }
+}
+
 #search_logo {
+  padding: 0.5rem 10px 0 10px;
   grid-area: logo;
   display: flex;
   align-items: center;
@@ -90,7 +129,12 @@
 }
 
 #search_view {
+  padding: 0.5rem 0.3rem 0 0.5rem;
   grid-area: search;
+
+  body.results_endpoint & {
+    padding: 0.5rem 2.8rem 0 0;
+  }
 }
 
 .search_box {
@@ -114,7 +158,7 @@
   outline: none;
   color: var(--color-search-font);
   font-size: 1.1rem;
-  z-index: 10000;
+  z-index: 1000;
 
   &:hover {
     color: var(--color-search-background-hover);
@@ -139,7 +183,7 @@ html.no-js #clear_search.hide_if_nojs {
   outline: none;
   color: var(--color-search-font);
   font-size: 1.1rem;
-  z-index: 2;
+  z-index: 100;
 }
 
 #q {
@@ -205,11 +249,6 @@ html.no-js #clear_search.hide_if_nojs {
   #categories {
     font-size: 90%;
     clear: both;
-
-    .checkbox_container {
-      margin: auto;
-      margin-top: 2px;
-    }
   }
 }
 
@@ -219,7 +258,7 @@ html.no-js #clear_search.hide_if_nojs {
     #categories_container {
       width: max-content;
 
-      .category {
+      .category_checkbox {
         display: inline-block;
         width: auto;
       }
@@ -228,8 +267,7 @@ html.no-js #clear_search.hide_if_nojs {
     #categories {
       width: 100%;
       .ltr-text-align-left();
-      overflow-x: scroll;
-      overflow-y: hidden;
+      overflow: scroll hidden;
       -webkit-overflow-scrolling: touch;
     }
   }
@@ -240,8 +278,7 @@ html.no-js #clear_search.hide_if_nojs {
     width: 100%;
     margin: 0;
     padding: 0.1rem 0 0 0;
-    column-gap: 0;
-    row-gap: 0;
+    gap: 0 0;
     grid-template-areas:
       "logo search"
       "categories categories";
@@ -254,7 +291,6 @@ html.no-js #clear_search.hide_if_nojs {
   .search_box {
     width: 98%;
     display: flex;
-    margin: 0 auto;
   }
 
   #q {
@@ -263,7 +299,8 @@ html.no-js #clear_search.hide_if_nojs {
   }
 
   .search_filters {
-    margin: 0;
+    margin: 0 10px;
+    padding: 0.5rem 0;
   }
 
   .category {
@@ -271,14 +308,21 @@ html.no-js #clear_search.hide_if_nojs {
     width: auto;
     margin: 0;
 
+    svg {
+      display: none;
+    }
+  }
+
+  .category_checkbox {
     label {
       padding: 1rem !important;
       margin: 0 !important;
-
-      svg {
-        display: none;
-      }
     }
+  }
+
+  .category_button {
+    padding: 1rem !important;
+    margin: 0 !important;
   }
 
   #search_view:focus-within {
@@ -288,7 +332,7 @@ html.no-js #clear_search.hide_if_nojs {
     top: 0;
     height: 100%;
     width: 100%;
-    z-index: 10000;
+    z-index: 2000;
 
     .search_box {
       border-bottom: 1px solid var(--color-search-border);
@@ -337,4 +381,13 @@ html.no-js #clear_search.hide_if_nojs {
 
 #categories_container {
   position: relative;
+}
+
+.favicon img {
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 10%;
+  background-color: var(--color-favicon-background-color);
+  border: 1px solid var(--color-favicon-border-color);
+  display: flex;
 }

@@ -1,7 +1,7 @@
-# -*- coding: utf-8 -*-
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 import  sys, os
+from pathlib import Path
 from pallets_sphinx_themes import ProjectLink
 
 from searx import get_setting
@@ -10,10 +10,9 @@ from searx.version import VERSION_STRING, GIT_URL, GIT_BRANCH
 # Project --------------------------------------------------------------
 
 project = 'SearXNG'
-copyright = '2021 SearXNG team, 2015-2021 Adam Tauber, Noémi Ványi'
-author = '2021 SearXNG team, 2015-2021 Adam Tauber'
+copyright = 'SearXNG team'
+author = 'SearXNG team'
 release, version = VERSION_STRING, VERSION_STRING
-
 SEARXNG_URL = get_setting('server.base_url') or 'https://example.org/searxng'
 ISSUE_URL = get_setting('brand.issue_url')
 DOCS_URL = get_setting('brand.docs_url')
@@ -21,6 +20,9 @@ PUBLIC_INSTANCES = get_setting('brand.public_instances')
 PRIVACYPOLICY_URL = get_setting('general.privacypolicy_url')
 CONTACT_URL = get_setting('general.contact_url')
 WIKI_URL = get_setting('brand.wiki_url')
+
+SOURCEDIR = Path(__file__).parent.parent / "searx"
+os.environ['SOURCEDIR'] = str(SOURCEDIR)
 
 # hint: sphinx.ext.viewcode won't highlight when 'highlight_language' [1] is set
 #       to string 'none' [2]
@@ -52,7 +54,7 @@ searx.engines.load_engines(searx.settings['engines'])
 jinja_contexts = {
     'searx': {
         'engines': searx.engines.engines,
-        'plugins': searx.plugins.plugins,
+        'plugins': searx.plugins.STORAGE,
         'version': {
             'node': os.getenv('NODE_MINIMUM_VERSION')
         },
@@ -68,7 +70,7 @@ jinja_filters = {
 # Let the Jinja template in configured_engines.rst access documented_modules
 # to automatically link documentation for modules if it exists.
 def setup(app):
-    ENGINES_DOCNAME = 'admin/engines/configured_engines'
+    ENGINES_DOCNAME = 'user/configured_engines'
 
     def before_read_docs(app, env, docnames):
         assert ENGINES_DOCNAME in docnames
@@ -127,8 +129,9 @@ extensions = [
     'notfound.extension',  # https://github.com/readthedocs/sphinx-notfound-page
 ]
 
+# autodoc_typehints = "description"
 autodoc_default_options = {
-    'member-order': 'groupwise',
+    'member-order': 'bysource',
 }
 
 myst_enable_extensions = [
@@ -168,6 +171,7 @@ imgmath_image_format = 'svg'
 imgmath_font_size = 14
 # sphinx.ext.imgmath setup END
 
+html_show_sphinx = False
 html_theme_options = {"index_sidebar_logo": True}
 html_context = {"project_links": [] }
 html_context["project_links"].append(ProjectLink("Source", GIT_URL + '/tree/' + GIT_BRANCH))
