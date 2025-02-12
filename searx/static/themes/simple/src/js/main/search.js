@@ -32,7 +32,7 @@
       updateClearButton();
       ev.preventDefault();
     });
-    qinput.addEventListener('keyup', updateClearButton, false);
+    qinput.addEventListener('input', updateClearButton, false);
   }
 
   searxng.ready(function () {
@@ -43,11 +43,11 @@
       createClearButton(qinput);
 
       // autocompleter
-      if (searxng.settings.autocomplete_provider) {
+      if (searxng.settings.autocomplete) {
         searxng.autocomplete = AutoComplete.call(w, {
           Url: "./autocompleter",
           EmptyMessage: searxng.settings.translations.no_item_found,
-          HttpMethod: searxng.settings.http_method,
+          HttpMethod: searxng.settings.method,
           HttpHeaders: {
             "Content-type": "application/x-www-form-urlencoded",
             "X-Requested-With": "XMLHttpRequest"
@@ -65,6 +65,46 @@
               }
             });
           },
+          _Select: function (item) {
+            AutoComplete.defaults._Select.call(this, item);
+            var form = item.closest('form');
+            if (form) {
+              form.submit();
+            }
+          },
+          _MinChars: function () {
+            if (this.Input.value.indexOf('!') > -1) {
+              return 0;
+            } else {
+              return AutoComplete.defaults._MinChars.call(this);
+            }
+          },
+          KeyboardMappings: Object.assign({}, AutoComplete.defaults.KeyboardMappings, {
+            "KeyUpAndDown_up": Object.assign({}, AutoComplete.defaults.KeyboardMappings.KeyUpAndDown_up, {
+              Callback: function (event) {
+                AutoComplete.defaults.KeyboardMappings.KeyUpAndDown_up.Callback.call(this, event);
+                var liActive = this.DOMResults.querySelector("li.active");
+                if (liActive) {
+                  AutoComplete.defaults._Select.call(this, liActive);
+                }
+              },
+            }),
+            "Tab": Object.assign({}, AutoComplete.defaults.KeyboardMappings.Enter, {
+              Conditions: [{
+                Is: 9,
+                Not: false
+              }],
+              Callback: function (event) {
+                if (this.DOMResults.getAttribute("class").indexOf("open") != -1) {
+                  var liActive = this.DOMResults.querySelector("li.active");
+                  if (liActive !== null) {
+                    AutoComplete.defaults._Select.call(this, liActive);
+                    event.preventDefault();
+                  }
+                }
+              },
+            })
+          }),
         }, "#" + qinput_id);
       }
 
@@ -110,29 +150,58 @@
       }
     }
 
-    // vanilla js version of search_on_category_select.js
-    if (qinput !== null && d.querySelector('.help') != null && searxng.settings.search_on_category_select) {
-      d.querySelector('.help').className = 'invisible';
-
-      searxng.on('#categories input', 'change', function () {
-        var i, categories = d.querySelectorAll('#categories input[type="checkbox"]');
-        for (i = 0; i < categories.length; i++) {
-          if (categories[i] !== this && categories[i].checked) {
-            categories[i].click();
-          }
-        }
-        if (! this.checked) {
-          this.click();
-        }
-        submitIfQuery();
-        return false;
-      });
-
+    // Additionally to searching when selecting a new category, we also
+    // automatically start a new search request when the user changes a search
+    // filter (safesearch, time range or language) (this requires JavaScript
+    // though)
+    if (
+      qinput !== null
+        && searxng.settings.search_on_category_select
+      // If .search_filters is undefined (invisible) we are on the homepage and
+      // hence don't have to set any listeners
+        && d.querySelector(".search_filters") != null
+    ) {
       searxng.on(d.getElementById('safesearch'), 'change', submitIfQuery);
       searxng.on(d.getElementById('time_range'), 'change', submitIfQuery);
       searxng.on(d.getElementById('language'), 'change', submitIfQuery);
     }
 
+    const categoryButtons = d.querySelectorAll("button.category_button");
+    for (let button of categoryButtons) {
+      searxng.on(button, 'click', (event) => {
+        if (event.shiftKey) {
+          event.preventDefault();
+          button.classList.toggle("selected");
+          return;
+        }
+
+        // manually deselect the old selection when a new category is selected
+        const selectedCategories = d.querySelectorAll("button.category_button.selected");
+        for (let categoryButton of selectedCategories) {
+          categoryButton.classList.remove("selected");
+        }
+        button.classList.add("selected");
+      })
+    }
+
+    // override form submit action to update the actually selected categories
+    const form = d.querySelector("#search");
+    if (form != null) {
+      searxng.on(form, 'submit', (event) => {
+        event.preventDefault();
+        const categoryValuesInput = d.querySelector("#selected-categories");
+        if (categoryValuesInput) {
+          let categoryValues = [];
+          for (let categoryButton of categoryButtons) {
+            if (categoryButton.classList.contains("selected")) {
+              categoryValues.push(categoryButton.name.replace("category_", ""));
+            }
+          }
+          categoryValuesInput.value = categoryValues.join(",");
+        }
+        form.submit();
+      });
+    }
   });
 
 })(window, document, window.searxng);
